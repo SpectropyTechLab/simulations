@@ -41,7 +41,7 @@ app.post('/api/upload', async (req, res) => {
     if (error) throw error;
 
     // Generate public URL
-    const publicUrl = `https://simulations-qd01.onrender.com/sim/${data.id}`;
+    const publicUrl = `https://simulations-qd01.onrender.com/sim/${data.id}` || ` http://localhost:3000/sim/${data.id}`;
     res.json({ success: true, url: publicUrl });
   } catch (err) {
     console.error(err);
@@ -69,6 +69,37 @@ app.get('/sim/:id', async (req, res) => {
     res.send(data.html_content);
   } catch (err) {
     res.status(500).send('<h1>Server Error</h1>');
+  }
+});
+
+// ✅ NEW: GET /api/simulations — must come BEFORE /sim/:id
+app.get('/api/simulations', async (req, res) => {
+  const { subject } = req.query;
+
+  const validSubjects = ['Physics', 'Maths', 'Chemistry', 'Biology'];
+  if (!subject || !validSubjects.includes(subject)) {
+    return res.status(400).json({ error: 'Valid subject required' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('simulations')
+      .select('id, subject, chapter, html_content')
+      .eq('subject', subject)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // ✅ Use sim.id, not data.id
+    const baseUrl = 'https://simulations-qd01.onrender.com' || 'http://localhost:3000';
+    const simulations = data.map(sim => ({
+      ...sim,
+      url: `${baseUrl}/sim/${sim.id}` // 🔥 sim.id, not data.id
+    }));
+    res.json(simulations);
+  } catch (err) {
+    console.error('Fetch simulations error:', err);
+    res.status(500).json({ error: 'Failed to fetch simulations' });
   }
 });
 
