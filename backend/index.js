@@ -41,7 +41,7 @@ app.post('/api/upload', async (req, res) => {
     if (error) throw error;
 
     // Generate public URL
-    const publicUrl = `${process.env.FRONTEND_URL}/sim/${data.id}`;
+    const publicUrl = `https://simulations-qd01.onrender.com/sim/${data.id}`;
     res.json({ success: true, url: publicUrl });
   } catch (err) {
     console.error(err);
